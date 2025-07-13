@@ -156,11 +156,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial load
     loadLogs(true);
 
-    // Refresh logs every 2 seconds when popup is open, but only if changed
-    const refreshInterval = setInterval(() => loadLogs(false), 2000);
-    
-    // Clean up interval when popup is closed
-    window.addEventListener('beforeunload', function() {
-        clearInterval(refreshInterval);
-    });
+    // Manual refresh only - remove automatic refresh to prevent DOM rebuilding
+    // Users can refresh by reopening the popup if needed
 });
