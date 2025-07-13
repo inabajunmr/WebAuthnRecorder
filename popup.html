@@ -4,29 +4,198 @@
   <meta charset="utf-8">
   <style>
     body {
-      width: 300px;
-      height: 150px;
+      width: 600px;
+      height: 500px;
       margin: 0;
-      padding: 20px;
+      padding: 16px;
       font-family: Arial, sans-serif;
+      font-size: 12px;
+      overflow: hidden;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    h3 {
+      margin: 0;
+      color: #333;
+      font-size: 16px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+    
+    button {
+      padding: 6px 12px;
+      font-size: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #f8f9fa;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background: #e9ecef;
+    }
+    
+    .export-btn {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    
+    .export-btn:hover {
+      background: #0056b3;
+    }
+    
+    .clear-btn {
+      background: #dc3545;
+      color: white;
+      border-color: #dc3545;
+    }
+    
+    .clear-btn:hover {
+      background: #c82333;
+    }
+    
+    #status {
+      margin-bottom: 12px;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-weight: bold;
+      color: #495057;
+    }
+    
+    #logs {
+      height: 380px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+    }
+    
+    .no-logs {
+      text-align: center;
+      color: #6c757d;
+      padding: 40px 20px;
+      font-style: italic;
+    }
+    
+    .log-entry {
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      background: #fff;
+    }
+    
+    .log-header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .log-type {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 10px;
+    }
+    
+    .type-get {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .type-create {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .log-status {
       font-size: 14px;
     }
-    h3 {
-      margin: 0 0 10px 0;
-      color: #333;
+    
+    .status-success {
+      color: #28a745;
     }
-    p {
-      margin: 5px 0;
-      color: #666;
-      line-height: 1.4;
+    
+    .status-error {
+      color: #dc3545;
+    }
+    
+    .status-pending {
+      color: #ffc107;
+    }
+    
+    .log-timestamp {
+      color: #6c757d;
+      font-size: 10px;
+      margin-left: auto;
+    }
+    
+    .log-url {
+      font-size: 10px;
+      color: #007bff;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    
+    .log-details details {
+      margin-bottom: 8px;
+    }
+    
+    .log-details summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: #495057;
+      padding: 4px 0;
+    }
+    
+    .json-content, .error-content {
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 4px;
+    }
+    
+    .error-content {
+      background: #f8d7da;
+      color: #721c24;
     }
   </style>
 </head>
 <body>
-  <div>
+  <div class="header">
     <h3>WebAuthn Logger</h3>
-    <p>This extension logs WebAuthn API calls to the console.</p>
-    <p>Open DevTools Console to see logs when navigator.credentials.get() or create() are called.</p>
+    <div class="controls">
+      <button id="exportBtn" class="export-btn">Export JSON</button>
+      <button id="clearBtn" class="clear-btn">Clear All</button>
+    </div>
   </div>
+  
+  <div id="status">Loading...</div>
+  
+  <div id="logs">
+    <div class="no-logs">Loading logs...</div>
+  </div>
+  
+  <script src="popup.js"></script>
 </body>
 </html>

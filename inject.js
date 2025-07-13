@@ -14,20 +14,28 @@
     const originalGet = navigator.credentials.get;
     const originalCreate = navigator.credentials.create;
     
-    // Helper function to safely stringify objects
+    // Helper function to safely stringify objects for JSON storage
     function safeStringify(obj, depth = 0) {
         if (depth > 3) return '[Max Depth Reached]';
         
         try {
-            if (obj === null || obj === undefined) return String(obj);
-            if (typeof obj !== 'object') return String(obj);
+            if (obj === null || obj === undefined) return obj;
+            if (typeof obj !== 'object') return obj;
             
             if (obj instanceof ArrayBuffer) {
-                return `ArrayBuffer(${obj.byteLength} bytes)`;
+                return {
+                    _type: 'ArrayBuffer',
+                    byteLength: obj.byteLength,
+                    data: Array.from(new Uint8Array(obj))
+                };
             }
             
             if (obj instanceof Uint8Array) {
-                return `Uint8Array(${obj.length} bytes): [${Array.from(obj.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')}${obj.length > 16 ? '...' : ''}]`;
+                return {
+                    _type: 'Uint8Array',
+                    length: obj.length,
+                    data: Array.from(obj)
+                };
             }
             
             const result = {};
@@ -48,81 +56,128 @@
         }
     }
     
+    // Helper function to save data to chrome.storage.local via content script
+    function saveToStorage(logData) {
+        window.postMessage({
+            type: 'WEBAUTHN_LOG',
+            data: logData
+        }, '*');
+    }
+    
     // Override navigator.credentials.get
     navigator.credentials.get = function(options) {
+        const timestamp = new Date().toISOString();
+        const url = window.location.href;
+        
+        // Create log entry
+        const logEntry = {
+            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            type: 'get',
+            timestamp: timestamp,
+            url: url,
+            options: safeStringify(options),
+            success: null,
+            result: null,
+            error: null
+        };
+        
         console.group('[WebAuthn Logger] navigator.credentials.get() called');
-        console.log('📥 Parameters:', safeStringify(options));
-        console.log('🕐 Timestamp:', new Date().toISOString());
-        console.log('🌐 URL:', window.location.href);
+        console.log('📥 Parameters:', logEntry.options);
+        console.log('🕐 Timestamp:', timestamp);
+        console.log('🌐 URL:', url);
         
-        // Log publicKey specific details if available
-        if (options && options.publicKey) {
-            console.group('🔑 PublicKey Details:');
-            console.log('Challenge:', safeStringify(options.publicKey.challenge));
-            console.log('RP ID:', options.publicKey.rpId);
-            console.log('Allow Credentials:', safeStringify(options.publicKey.allowCredentials));
-            console.log('User Verification:', options.publicKey.userVerification);
-            console.log('Timeout:', options.publicKey.timeout);
-            console.groupEnd();
-        }
-        
-        console.groupEnd();
+        // Save initial log entry
+        saveToStorage(logEntry);
         
         // Call original method and log result
         const promise = originalGet.call(this, options);
         promise.then(
             (result) => {
+                const resultEntry = {
+                    ...logEntry,
+                    success: true,
+                    result: safeStringify(result)
+                };
+                saveToStorage(resultEntry);
+                
                 console.group('[WebAuthn Logger] navigator.credentials.get() success');
-                console.log('✅ Result:', safeStringify(result));
+                console.log('✅ Result:', result);
                 console.groupEnd();
             },
             (error) => {
+                const errorEntry = {
+                    ...logEntry,
+                    success: false,
+                    error: error.toString()
+                };
+                saveToStorage(errorEntry);
+                
                 console.group('[WebAuthn Logger] navigator.credentials.get() error');
                 console.log('❌ Error:', error);
                 console.groupEnd();
             }
         );
         
+        console.groupEnd();
+        
         return promise;
     };
     
     // Override navigator.credentials.create
     navigator.credentials.create = function(options) {
+        const timestamp = new Date().toISOString();
+        const url = window.location.href;
+        
+        // Create log entry
+        const logEntry = {
+            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            type: 'create',
+            timestamp: timestamp,
+            url: url,
+            options: safeStringify(options),
+            success: null,
+            result: null,
+            error: null
+        };
+        
         console.group('[WebAuthn Logger] navigator.credentials.create() called');
-        console.log('📤 Parameters:', safeStringify(options));
-        console.log('🕐 Timestamp:', new Date().toISOString());
-        console.log('🌐 URL:', window.location.href);
+        console.log('📤 Parameters:', logEntry.options);
+        console.log('🕐 Timestamp:', timestamp);
+        console.log('🌐 URL:', url);
         
-        // Log publicKey specific details if available
-        if (options && options.publicKey) {
-            console.group('🔑 PublicKey Details:');
-            console.log('Challenge:', safeStringify(options.publicKey.challenge));
-            console.log('RP:', safeStringify(options.publicKey.rp));
-            console.log('User:', safeStringify(options.publicKey.user));
-            console.log('Pub Key Cred Params:', safeStringify(options.publicKey.pubKeyCredParams));
-            console.log('Authenticator Selection:', safeStringify(options.publicKey.authenticatorSelection));
-            console.log('Attestation:', options.publicKey.attestation);
-            console.log('Timeout:', options.publicKey.timeout);
-            console.log('Exclude Credentials:', safeStringify(options.publicKey.excludeCredentials));
-            console.groupEnd();
-        }
-        
-        console.groupEnd();
+        // Save initial log entry
+        saveToStorage(logEntry);
         
         // Call original method and log result
         const promise = originalCreate.call(this, options);
         promise.then(
             (result) => {
+                const resultEntry = {
+                    ...logEntry,
+                    success: true,
+                    result: safeStringify(result)
+                };
+                saveToStorage(resultEntry);
+                
                 console.group('[WebAuthn Logger] navigator.credentials.create() success');
-                console.log('✅ Result:', safeStringify(result));
+                console.log('✅ Result:', result);
                 console.groupEnd();
             },
             (error) => {
+                const errorEntry = {
+                    ...logEntry,
+                    success: false,
+                    error: error.toString()
+                };
+                saveToStorage(errorEntry);
+                
                 console.group('[WebAuthn Logger] navigator.credentials.create() error');
                 console.log('❌ Error:', error);
                 console.groupEnd();
             }
         );
+        
+        console.groupEnd();
         
         return promise;
     };

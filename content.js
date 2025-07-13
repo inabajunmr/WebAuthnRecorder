@@ -28,6 +28,41 @@
         injectScript();
     }
     
+    // Listen for messages from injected script to save to storage
+    window.addEventListener('message', function(event) {
+        // Only accept messages from same origin and with correct type
+        if (event.source !== window || event.data.type !== 'WEBAUTHN_LOG') {
+            return;
+        }
+        
+        const logData = event.data.data;
+        console.log('[WebAuthn Logger] Saving to storage:', logData);
+        
+        // Get existing logs from storage
+        chrome.storage.local.get(['webauthn_logs'], function(result) {
+            const existingLogs = result.webauthn_logs || [];
+            
+            // Add new log entry
+            existingLogs.push(logData);
+            
+            // Keep only last 1000 entries to prevent storage bloat
+            if (existingLogs.length > 1000) {
+                existingLogs.splice(0, existingLogs.length - 1000);
+            }
+            
+            // Save back to storage
+            chrome.storage.local.set({
+                webauthn_logs: existingLogs
+            }, function() {
+                if (chrome.runtime.lastError) {
+                    console.error('[WebAuthn Logger] Storage error:', chrome.runtime.lastError);
+                } else {
+                    console.log('[WebAuthn Logger] Saved log entry, total entries:', existingLogs.length);
+                }
+            });
+        });
+    });
+    
     // Backup: also listen for page navigation events
     let lastUrl = location.href;
     new MutationObserver(() => {
