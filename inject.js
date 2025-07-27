@@ -15,12 +15,16 @@
     const originalCreate = navigator.credentials.create;
     
     // Helper function to safely stringify objects for JSON storage
-    function safeStringify(obj, depth = 0) {
-        if (depth > 3) return '[Max Depth Reached]';
+    function safeStringify(obj, depth = 0, visited = new WeakSet()) {
+        if (depth > 10) return '[Max Depth Reached]';
         
         try {
             if (obj === null || obj === undefined) return obj;
             if (typeof obj !== 'object') return obj;
+            
+            // Prevent circular references
+            if (visited.has(obj)) return '[Circular Reference]';
+            visited.add(obj);
             
             if (obj instanceof ArrayBuffer) {
                 return {
@@ -38,16 +42,60 @@
                 };
             }
             
+            // Handle Array objects (like allowCredentials)
+            if (Array.isArray(obj)) {
+                return obj.map(item => safeStringify(item, depth + 1, visited));
+            }
+            
+            // Handle PublicKeyCredential objects specifically
+            if (obj instanceof PublicKeyCredential) {
+                const result = {
+                    _type: 'PublicKeyCredential',
+                    id: obj.id,
+                    rawId: obj.rawId,
+                    type: obj.type,
+                    authenticatorAttachment: obj.authenticatorAttachment,
+                    response: {},
+                    clientExtensionResults: obj.clientExtensionResults
+                };
+                
+                // Handle the response object (AuthenticatorAssertionResponse or AuthenticatorAttestationResponse)
+                if (obj.response) {
+                    result.response = {
+                        clientDataJSON: obj.response.clientDataJSON,
+                        authenticatorData: obj.response.authenticatorData
+                    };
+                    
+                    // For AuthenticatorAssertionResponse (get operation)
+                    if (obj.response.signature) {
+                        result.response.signature = obj.response.signature;
+                        result.response.userHandle = obj.response.userHandle;
+                    }
+                    
+                    // For AuthenticatorAttestationResponse (create operation)
+                    if (obj.response.attestationObject) {
+                        result.response.attestationObject = obj.response.attestationObject;
+                    }
+                    
+                    // Recursively stringify each response property
+                    for (const [key, value] of Object.entries(result.response)) {
+                        result.response[key] = safeStringify(value, depth + 1, visited);
+                    }
+                }
+                
+                // Recursively stringify other properties
+                result.rawId = safeStringify(obj.rawId, depth + 1, visited);
+                result.clientExtensionResults = safeStringify(obj.clientExtensionResults, depth + 1, visited);
+                
+                return result;
+            }
+            
             const result = {};
             for (const [key, value] of Object.entries(obj)) {
                 if (typeof value === 'function') {
                     result[key] = '[Function]';
-                } else if (value instanceof ArrayBuffer || value instanceof Uint8Array) {
-                    result[key] = safeStringify(value, depth + 1);
-                } else if (typeof value === 'object') {
-                    result[key] = safeStringify(value, depth + 1);
                 } else {
-                    result[key] = value;
+                    result[key] = safeStringify(value, depth + 1, visited);
                 }
             }
             return result;

@@ -42,8 +42,18 @@
         chrome.storage.local.get(['webauthn_logs'], function(result) {
             const existingLogs = result.webauthn_logs || [];
             
-            // Add new log entry
-            existingLogs.push(logData);
+            // Check if this is an update to an existing entry
+            const existingIndex = existingLogs.findIndex(log => log.id === logData.id);
+            
+            if (existingIndex !== -1) {
+                // Update existing entry
+                existingLogs[existingIndex] = logData;
+                console.log('[WebAuthn Logger] Updated existing log entry:', logData.id);
+            } else {
+                // Add new log entry
+                existingLogs.push(logData);
+                console.log('[WebAuthn Logger] Added new log entry:', logData.id);
+            }
             
             // Keep only last 1000 entries to prevent storage bloat
             if (existingLogs.length > 1000) {

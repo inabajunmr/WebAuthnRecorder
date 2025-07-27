@@ -1,3 +1,5 @@
 # WebAuthnRecorder
 
-<img width="631" height="537" alt="image" src="https://github.com/user-attachments/assets/f6b79979-f841-4cef-8720-39bcc2cc648c" />
+WebAuthnRecorder is a Chrome extension for recording and analyzing WebAuthn API (navigator.credentials) calls. When passkeys are used on web pages (triggering navigator.credentials.create or navigator.credentials.get calls), this extension captures and records the request and response parameters, making them viewable through the Chrome extension.
+
+![screenshot](./webauthn.gif)
