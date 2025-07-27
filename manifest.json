@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "WebAuthn Logger Extension",
+  "name": "WebAuthnRecorder",
   "version": "1.0",
   "description": "Chrome extension that logs WebAuthn navigator.credentials calls",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "WebAuthn Logger"
+    "default_title": "WebAuthnRecorder"
   },
   "icons": {
     "16": "icons/icon16.png",
